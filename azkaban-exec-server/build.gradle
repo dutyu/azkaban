@@ -35,6 +35,8 @@ dependencies {
     testCompile deps.hadoopHdfs
 }
 
+test.onlyIf { Boolean.getBoolean('need.tests') }
+
 distributions {
     main {
         contents {

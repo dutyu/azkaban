@@ -121,6 +121,8 @@ task jsTest(dependsOn: ['npm_install'], type: NodeTask) {
 }
 test.dependsOn jsTest
 
+test.onlyIf { Boolean.getBoolean('need.tests') }
+
 task restliTemplateGenerator(type: JavaExec) {
     mkdir 'src/restli/generatedJava'
 
