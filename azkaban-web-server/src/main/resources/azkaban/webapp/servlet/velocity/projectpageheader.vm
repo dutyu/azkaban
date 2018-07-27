@@ -27,9 +27,11 @@
                     <button id="project-delete-btn" class="btn btn-sm btn-danger">
                         <span class="glyphicon glyphicon-trash"></span> 删除项目
                     </button>
+                    #if (!$hideUploadProject)
                     <button id="project-copy-btn" class="btn btn-sm btn-info" title="$!project.name">
                         <span class="glyphicon glyphicon-download"></span> 从已有项目复制
                     </button>
+                    #end
                     #if (!$hideUploadProject)
                         <button id="project-upload-btn" class="btn btn-sm btn-primary">
                             <span class="glyphicon glyphicon-upload"></span> 上传

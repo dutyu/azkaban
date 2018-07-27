@@ -42,7 +42,7 @@ azkaban.ProjectView = Backbone.View.extend({
         $('#copy-project-modal').modal();
         var requestURL = contextURL + "/index";
         var requestData = {
-            "ajax": "fetchuserprojects"
+            "ajax": "fetchuserandgroupprojects"
         };
 
         var successHandler = function (data) {

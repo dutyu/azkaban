@@ -3,3 +3,4 @@ _AzkabanTestDir*
 conf/*
 classes/
 *.class
+*.properties

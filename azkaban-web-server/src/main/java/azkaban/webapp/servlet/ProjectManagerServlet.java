@@ -158,21 +158,15 @@ public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
 
     private void handleDoAction(final HttpServletRequest req, final HttpServletResponse resp,
                                 final Session session) throws ServletException, IOException {
-        final Page page =
-                newPage(req, resp, session,
-                        "azkaban/webapp/servlet/velocity/projectpage.vm");
         if (getParam(req, "doaction").equals("copyfrom")) {
-            String projectName = getParam(req, "project");
-            String copyFrom = getParam(req, "copyfrom");
-            String variables = getParam(req, "variables");
+
             try {
-                if (StringUtils.isEmpty(copyFrom)) {
-                    throw new ProjectManagerException("please choose one project to copy!");
-                }
-                handleCopyProject(session, projectName, copyFrom, variables);
-                resp.sendRedirect(req.getRequestURI() + "?project=" + getParam(req, "project"));
+                handleCopyProject(req, resp, session);
             } catch (Exception e) {
                 logger.error("handle action failed! ", e);
+                final Page page =
+                        newPage(req, resp, session,
+                                "azkaban/webapp/servlet/velocity/projectpage.vm");
                 if (e instanceof ProjectManagerException) {
                     page.add("errorMsg", e.getMessage());
                 } else {
@@ -183,23 +177,63 @@ public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
         }
     }
 
-    private void handleCopyProject(final Session session, final String projectName, final String copyFrom, String variables) throws IOException, SchedulerException {
+    private void handleCopyProject(HttpServletRequest req, HttpServletResponse resp,
+                                   final Session session)
+            throws IOException, SchedulerException, ServletException {
+        String projectName = getParam(req, "project");
+        String copyFrom = getParam(req, "copyfrom");
+        String variables = getParam(req, "variables");
         logger.info("start handle copy project task ! projectName:" + projectName + "  copyForm: " + copyFrom);
-        User user = session.getUser();
-        final String zipFileName = copyFrom + ".zip";
-        final String type = "zip";
-        final String autoFix = "off";
-        File zipDir = Utils.getZipDir();
-        File zipFile = new File(zipDir, zipFileName);
+        final HashMap<String, String> ret = new HashMap<>(8);
 
-        final Map<String, String> params = new HashMap<>(8);
-        params.put("fix", autoFix);
-        params.put("projectName", projectName);
-        params.put("name", zipFileName);
-        params.put("type", type);
-        params.put("variables", variables);
+        if (StringUtils.isEmpty(copyFrom)) {
+            registerError(ret, "please choose one project to copy!", resp, 400);
+        } else {
 
-        uploadFile(user, getInputStream(zipFile), params);
+            User user = session.getUser();
+            final String zipFileName = copyFrom + ".zip";
+            final String type = "zip";
+            final String autoFix = "off";
+            File zipDir = Utils.getZipDir();
+            File zipFile = new File(zipDir, zipFileName);
+
+            final Map<String, String> params = new HashMap<>(8);
+            params.put("fix", autoFix);
+            params.put("projectName", projectName);
+            params.put("name", zipFileName);
+            params.put("type", type);
+            params.put("variables", variables);
+
+            final Project project = this.projectManager.getProject(projectName);
+
+            if (this.lockdownUploadProjects && !UserUtils
+                    .hasPermissionforAction(this.userManager, user, Type.UPLOADPROJECTS)) {
+                final String message =
+                        "Project uploading is locked out. Only admin users and users with special permissions can upload projects. "
+                                + "User " + user.getUserId() + " doesn't have permission to upload project.";
+                logger.info(message);
+                registerError(ret, message, resp, 403);
+            } else if (projectName == null || projectName.isEmpty()) {
+                registerError(ret, "No project name found.", resp, 400);
+            } else if (project == null) {
+                registerError(ret, "Copy from project Failed. Project '" + projectName
+                        + "' doesn't exist.", resp, 400);
+            } else if (!hasPermission(project, user, Type.WRITE)) {
+                registerError(ret, "Installation Failed. User '" + user.getUserId()
+                        + "' does not have write access.", resp, 400);
+            } else {
+                uploadFile(user, getInputStream(zipFile), params);
+            }
+        }
+        if (ret.containsKey("error")) {
+            setErrorMessageInCookie(resp, ret.get("error"));
+        }
+
+        if (ret.containsKey("warn")) {
+            setWarnMessageInCookie(resp, ret.get("warn"));
+        }
+
+        resp.sendRedirect(req.getRequestURI() + "?project=" + getParam(req, "project"));
     }
 
     private InputStream getInputStream(File file) throws IOException {

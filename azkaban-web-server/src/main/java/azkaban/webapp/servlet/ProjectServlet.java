@@ -36,10 +36,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -97,7 +94,7 @@ public class ProjectServlet extends LoginAbstractAzkabanServlet {
             throws ServletException, IOException {
 
         final String ajaxName = getParam(req, "ajax");
-        final HashMap<String, Object> ret = new HashMap<>();
+        final HashMap<String, Object> ret = new HashMap<>(16);
 
         if (ajaxName.equals("fetchallprojects")) {
             final List<Project> projects = manager.getProjects();
@@ -107,9 +104,28 @@ public class ProjectServlet extends LoginAbstractAzkabanServlet {
             ret.put("projects", processedProjects);
         } else if (ajaxName.equals("fetchuserprojects")) {
             handleFetchUserProjects(req, session, manager, ret);
+        } else if (ajaxName.equals("fetchuserandgroupprojects")) {
+            handleFetchUserAndGroupProject(req, session, manager, ret);
         }
 
         this.writeJSON(resp, ret);
+    }
+
+    private void handleFetchUserAndGroupProject(final HttpServletRequest req, final Session session,
+                                                final ProjectManager manager, final HashMap<String, Object> ret) throws ServletException {
+        User user = null;
+
+        // if key "user" is specified, follow this logic
+        user = getUser(req, session);
+
+        final List<Project> userProjects = manager.getUserProjects(user);
+        final List<Project> groupProjects = manager.getGroupProjects(user);
+        final Set<Project> allProjects = new HashSet<>(16);
+        allProjects.addAll(userProjects);
+        allProjects.addAll(groupProjects);
+        final List<SimplifiedProject> simplifiedProjects = toSimplifiedProjects(allProjects);
+        List processedProjects = getProcessedProjects(simplifiedProjects);
+        ret.put("projects", processedProjects);
     }
 
     /**
@@ -122,8 +138,17 @@ public class ProjectServlet extends LoginAbstractAzkabanServlet {
                                          final ProjectManager manager, final HashMap<String, Object> ret)
             throws ServletException {
         User user = null;
+        user = getUser(req, session);
 
-        // if key "user" is specified, follow this logic
+
+        final List<Project> projects = manager.getUserProjects(user);
+        final List<SimplifiedProject> simplifiedProjects = toSimplifiedProjects(projects);
+        List processedProjects = getProcessedProjects(simplifiedProjects);
+        ret.put("projects", processedProjects);
+    }
+
+    private User getUser(HttpServletRequest req, Session session) throws ServletException {
+        User user;// if key "user" is specified, follow this logic
         if (hasParam(req, "user")) {
             final String userParam = getParam(req, "user");
             if (userParam.isEmpty()) {
@@ -135,11 +160,7 @@ public class ProjectServlet extends LoginAbstractAzkabanServlet {
             // if key "user" is not specified, default to the session user
             user = session.getUser();
         }
-
-        final List<Project> projects = manager.getUserProjects(user);
-        final List<SimplifiedProject> simplifiedProjects = toSimplifiedProjects(projects);
-        List processedProjects = getProcessedProjects(simplifiedProjects);
-        ret.put("projects", processedProjects);
+        return user;
     }
 
     private List getProcessedProjects(List<SimplifiedProject> simplifiedProjects) {
@@ -167,8 +188,9 @@ public class ProjectServlet extends LoginAbstractAzkabanServlet {
 
     /**
      * A simple helper method that converts a List<Project> to List<SimplifiedProject>
+     * @param projects
      */
-    private List<SimplifiedProject> toSimplifiedProjects(final List<Project> projects) {
+    private List<SimplifiedProject> toSimplifiedProjects(final Collection<Project> projects) {
         final List<SimplifiedProject> simplifiedProjects = new ArrayList<>();
         for (final Project p : projects) {
             final SimplifiedProject sp =

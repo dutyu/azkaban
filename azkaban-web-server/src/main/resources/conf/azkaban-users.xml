@@ -1,7 +1,10 @@
 <azkaban-users>
-  <user groups="azkaban" password="azkaban" roles="admin" username="azkaban"/>
+  <user groups="admin_g" password="azkaban" username="azkaban"/>
+  <user password="azkaban" groups="read_g" username="read_test"/>
   <user password="metrics" roles="metrics" username="metrics"/>
-
+  <group name="admin_g" roles="admin" />
+  <group name="read_g" roles="readall" />
   <role name="admin" permissions="ADMIN"/>
   <role name="metrics" permissions="METRICS"/>
+  <role name="readall" permissions="READ"/>
 </azkaban-users>
