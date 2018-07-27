@@ -169,7 +169,6 @@ public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
                 if (StringUtils.isEmpty(copyFrom)) {
                     throw new ProjectManagerException("please choose one project to copy!");
                 }
-                validateVariables(variables);
                 handleCopyProject(session, projectName, copyFrom, variables);
                 resp.sendRedirect(req.getRequestURI() + "?project=" + getParam(req, "project"));
             } catch (Exception e) {
@@ -1829,7 +1828,6 @@ public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
         final Props props = new Props();
         final String autoFix = params.get("fix");
         final Project project = this.projectManager.getProject(params.get("projectName"));
-        final String name = params.get("name");
         final String type = params.get("type");
         final String variables = params.get("variables");
         logger.info("template variables: " + variables);
@@ -1892,23 +1890,6 @@ public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
             }
         }
     }
-
-
-    private void validateVariables(String vairables) {
-        List<String> lines = Arrays.asList(vairables.split(System.getProperty("line.separator")));
-        for (String line : lines.stream().map(srcLine -> srcLine.trim())
-                .collect(Collectors.toList())) {
-            if (!line.contains("=")) {
-                throw new ProjectManagerException("template var format error ! maybe should have at least one =");
-            }
-            String[] kv = line.split("=", 2);
-            logger.info("kv: " + String.join("+", kv));
-            if (kv == null || kv.length != 2) {
-                throw new ProjectManagerException("template var format error ! maybe the format should like this XX=XX");
-            }
-        }
-    }
-
 
     private List<Entry<String, String>> validateAndParseVar(String vairables) {
         List<String> lines = Arrays.asList(vairables.split(System.getProperty("line.separator")));
@@ -1990,7 +1971,7 @@ public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
         }
     }
 
-    private File generateArchiveFile(File archiveFile, String variables) throws IOException {
+    private File generateArchiveFile(final File archiveFile, final String variables) throws IOException {
         File tempDir = null;
         try {
             if (StringUtils.isEmpty(variables) || StringUtils.isEmpty(variables.trim())) {
