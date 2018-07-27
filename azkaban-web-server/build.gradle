@@ -1,5 +1,6 @@
 buildscript {
     repositories {
+        jcenter()
         mavenCentral()
         maven {
             url 'https://plugins.gradle.org/m2/'
@@ -8,6 +9,7 @@ buildscript {
     dependencies {
         classpath 'com.linkedin:gradle-dustjs-plugin:1.0.0'
         classpath 'de.obqo.gradle:gradle-lesscss-plugin:1.0-1.3.3'
+//        classpath 'org.akhikhl.gretty:gretty:+'
     }
 }
 
@@ -46,6 +48,9 @@ npm_cache_clean {
 apply plugin: 'lesscss'
 apply plugin: 'dustjs'
 apply plugin: 'distribution'
+apply plugin: 'war'
+//apply plugin: 'org.akhikhl.gretty'
+
 
 configurations {
     generateRestli
@@ -197,6 +202,16 @@ distributions {
             from(movingJsTojsToPackage) {
                 into 'web/js'
             }
+            from('src/main/zip') {
+                into 'zip'
+            }
         }
     }
 }
+
+//gretty {
+//    port = 8080
+//    contextPath ="/${project.name}"
+//    servletContainer = 'jetty9'
+//}
+

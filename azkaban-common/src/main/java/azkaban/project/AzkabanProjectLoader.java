@@ -17,32 +17,29 @@
 
 package azkaban.project;
 
-import static java.util.Objects.requireNonNull;
-
 import azkaban.Constants;
 import azkaban.Constants.ConfigurationKeys;
 import azkaban.flow.Flow;
 import azkaban.project.FlowLoaderUtils.DirFilter;
 import azkaban.project.FlowLoaderUtils.SuffixFilter;
 import azkaban.project.ProjectLogEvent.EventType;
-import azkaban.project.validator.ValidationReport;
-import azkaban.project.validator.ValidationStatus;
-import azkaban.project.validator.ValidatorConfigs;
-import azkaban.project.validator.ValidatorManager;
-import azkaban.project.validator.XmlValidatorManager;
+import azkaban.project.validator.*;
 import azkaban.storage.StorageManager;
 import azkaban.user.User;
 import azkaban.utils.Props;
 import azkaban.utils.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.zip.ZipFile;
-import javax.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Handles the downloading and uploading of projects.
@@ -247,6 +244,7 @@ class AzkabanProjectLoader {
   }
 
   private File unzipFile(final File archiveFile) throws IOException {
+    log.info("unzipFile archiveFile: " + archiveFile.getAbsolutePath());
     final ZipFile zipfile = new ZipFile(archiveFile);
     final File unzipped = Utils.createTempDir(this.tempDir);
     Utils.unzip(zipfile, unzipped);

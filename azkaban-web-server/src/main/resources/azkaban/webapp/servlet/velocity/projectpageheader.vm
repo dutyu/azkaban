@@ -15,29 +15,32 @@
 *#
 
 <div class="az-page-header">
-  <div class="container-full">
-    <div class="row">
-      <div class="header-title" id="project-page-header">
-        <h1><a href="${context}/manager?project=${project.name}">Project
-          <small>$project.name</small>
-        </a></h1>
-      </div>
-      <div class="header-control">
-        <div class="header-form pull-right" id="project-options">
-          <button id="project-delete-btn" class="btn btn-sm btn-danger">
-            <span class="glyphicon glyphicon-trash"></span> Delete Project
-          </button>
-          #if (!$hideUploadProject)
-            <button id="project-upload-btn" class="btn btn-sm btn-primary">
-              <span class="glyphicon glyphicon-upload"></span> Upload
-            </button>
-          #end
-          <a class="btn btn-sm btn-info"
-             href="${context}/manager?project=${project.name}&download=true">
-            <span class="glyphicon glyphicon-download"></span> Download
-          </a>
+    <div class="container-full">
+        <div class="row">
+            <div class="header-title" id="project-page-header">
+                <h1><a href="${context}/manager?project=${project.name}">项目
+                    <small>$project.name</small>
+                </a></h1>
+            </div>
+            <div class="header-control">
+                <div class="header-form pull-right" id="project-options">
+                    <button id="project-delete-btn" class="btn btn-sm btn-danger">
+                        <span class="glyphicon glyphicon-trash"></span> 删除项目
+                    </button>
+                    <button id="project-copy-btn" class="btn btn-sm btn-info" title="$!project.name">
+                        <span class="glyphicon glyphicon-download"></span> 从已有项目复制
+                    </button>
+                    #if (!$hideUploadProject)
+                        <button id="project-upload-btn" class="btn btn-sm btn-primary">
+                            <span class="glyphicon glyphicon-upload"></span> 上传
+                        </button>
+                    #end
+                    <a class="btn btn-sm btn-info"
+                       href="${context}/manager?project=${project.name}&download=true">
+                        <span class="glyphicon glyphicon-download"></span> 下载
+                    </a>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 </div>
