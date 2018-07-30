@@ -1928,7 +1928,8 @@ public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
     private List<Entry<String, String>> validateAndParseVar(String vairables) {
         List<String> lines = Arrays.asList(vairables.split(System.getProperty("line.separator")));
         Map<String, String> kvMap = new HashMap<>(16);
-        for (String line : lines.stream().map(srcLine -> srcLine.trim())
+        for (String line : lines.stream().filter(srcLine -> !srcLine.trim().startsWith("#"))
+                .map(srcLine -> srcLine.trim())
                 .collect(Collectors.toList())) {
             if (!line.contains("=")) {
                 throw new ProjectManagerException("template var format error ! maybe should have at least one =");
@@ -1955,8 +1956,10 @@ public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
                         logger.info("find dir:" + file.getAbsolutePath());
                         traverseAndReplaceVars(new File(file.getAbsolutePath()), kvList);
                     } else {
+                        if (!file.getName().endsWith(".properties")) {
+                            continue;
+                        }
                         logger.info("start to replace file:" + file.getAbsolutePath());
-
                         BufferedReader bufIn = null;
                         BufferedWriter out = null;
                         CharArrayWriter tempStream = null;
