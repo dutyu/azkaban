@@ -1956,9 +1956,6 @@ public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
                         logger.info("find dir:" + file.getAbsolutePath());
                         traverseAndReplaceVars(new File(file.getAbsolutePath()), kvList);
                     } else {
-                        if (!file.getName().endsWith(".properties")) {
-                            continue;
-                        }
                         logger.info("start to replace file:" + file.getAbsolutePath());
                         BufferedReader bufIn = null;
                         BufferedWriter out = null;
