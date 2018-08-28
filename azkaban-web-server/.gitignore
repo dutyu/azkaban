@@ -3,3 +3,4 @@ conf/*
 classes/
 *.class
 *.properties
+azkaban-users.xml
