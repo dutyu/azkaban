@@ -34,6 +34,7 @@ import azkaban.user.*;
 import azkaban.user.Permission.Type;
 import azkaban.utils.*;
 import azkaban.webapp.AzkabanWebServer;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -118,9 +119,7 @@ public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
     protected void handleGet(final HttpServletRequest req, final HttpServletResponse resp,
                              final Session session) throws ServletException, IOException {
         if (hasParam(req, "project")) {
-            if (hasParam(req, "doaction")) {
-                handleDoAction(req, resp, session);
-            } else if (hasParam(req, "ajax")) {
+            if (hasParam(req, "ajax")) {
                 handleAJAXAction(req, resp, session);
             } else if (hasParam(req, "logs")) {
                 handleProjectLogsPage(req, resp, session);
@@ -156,33 +155,30 @@ public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
     }
 
 
-    private void handleDoAction(final HttpServletRequest req, final HttpServletResponse resp,
-                                final Session session) throws ServletException, IOException {
-        if (getParam(req, "doaction").equals("copyfrom")) {
-
-            try {
-                handleCopyProject(req, resp, session);
-            } catch (Exception e) {
-                logger.error("handle action failed! ", e);
-                final Page page =
-                        newPage(req, resp, session,
-                                "azkaban/webapp/servlet/velocity/projectpage.vm");
-                if (e instanceof ProjectManagerException) {
-                    page.add("errorMsg", e.getMessage());
-                } else {
-                    page.add("errorMsg", "copy project failed!");
-                }
-                page.render();
+    private void handleCopyProjectWrapper(final HttpServletRequest req, final HttpServletResponse resp,
+                                          final Map<String, Object> params, final Session session) throws ServletException, IOException {
+        try {
+            handleCopyProject(req, resp, params, session);
+        } catch (Exception e) {
+            logger.error("handle action failed! ", e);
+            final Page page =
+                    newPage(req, resp, session,
+                            "azkaban/webapp/servlet/velocity/projectpage.vm");
+            if (e instanceof ProjectManagerException) {
+                page.add("errorMsg", e.getMessage());
+            } else {
+                page.add("errorMsg", "copy project failed!");
             }
+            page.render();
         }
     }
 
     private void handleCopyProject(HttpServletRequest req, HttpServletResponse resp,
-                                   final Session session)
-            throws IOException, SchedulerException, ServletException {
-        String projectName = getParam(req, "project");
-        String copyFrom = getParam(req, "copyfrom");
-        String variables = getParam(req, "variables");
+                                   Map<String, Object> params, final Session session)
+            throws Exception {
+        String projectName = (String) params.get("project");
+        String copyFrom = (String) params.get("copyfrom");
+        String variables = (String) params.get("variables");
         logger.info("start handle copy project task ! projectName:" + projectName + "  copyForm: " + copyFrom);
         final HashMap<String, String> ret = new HashMap<>(8);
 
@@ -190,39 +186,66 @@ public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
             registerError(ret, "please choose one project to copy!", resp, 400);
         } else {
 
+            InputStream inputStream;
             User user = session.getUser();
             final String zipFileName = copyFrom + ".zip";
             final String type = "zip";
             final String autoFix = "off";
-            File zipDir = Utils.getZipDir();
-            File zipFile = new File(zipDir, zipFileName);
+            final File zipDir = Utils.getZipDir();
+            final File zipFile1 = new File(zipDir, zipFileName);
 
-            final Map<String, String> params = new HashMap<>(8);
-            params.put("fix", autoFix);
-            params.put("projectName", projectName);
-            params.put("name", zipFileName);
-            params.put("type", type);
-            params.put("variables", variables);
+            final FileItem item = (FileItem) params.get("file");
 
-            final Project project = this.projectManager.getProject(projectName);
+            if (item != null && item.getSize() > 0) {
 
-            if (this.lockdownUploadProjects && !UserUtils
-                    .hasPermissionforAction(this.userManager, user, Type.UPLOADPROJECTS)) {
-                final String message =
-                        "Project uploading is locked out. Only admin users and users with special permissions can upload projects. "
-                                + "User " + user.getUserId() + " doesn't have permission to upload project.";
-                logger.info(message);
-                registerError(ret, message, resp, 403);
-            } else if (projectName == null || projectName.isEmpty()) {
-                registerError(ret, "No project name found.", resp, 400);
-            } else if (project == null) {
-                registerError(ret, "Copy from project Failed. Project '" + projectName
-                        + "' doesn't exist.", resp, 400);
-            } else if (!hasPermission(project, user, Type.WRITE)) {
-                registerError(ret, "Installation Failed. User '" + user.getUserId()
-                        + "' does not have write access.", resp, 400);
+                final String name = item.getName();
+                final File tempDir;
+                tempDir = Utils.createTempDir();
+                File file = new File(Utils.createTempDir(), "temp.zip");
+                Utils.unzip(new ZipFile(zipFile1), tempDir);
+                if (!name.endsWith(".zip")) {
+                    final File zipFile2 = new File(tempDir, name);
+                    item.write(zipFile2);
+                } else {
+                    final File zipFile2 = new File(name);
+                    item.write(zipFile2);
+                    Utils.unzip(new ZipFile(zipFile2), tempDir);
+                }
+
+                Utils.zip(tempDir, file);
+                inputStream = getInputStream(file);
             } else {
-                uploadFile(user, getInputStream(zipFile), params);
+                inputStream = getInputStream(zipFile1);
+            }
+
+            if (ret == null || MapUtils.isEmpty(ret)) {
+                final Map<String, String> paramMap = new HashMap<>(8);
+                paramMap.put("fix", autoFix);
+                paramMap.put("projectName", projectName);
+                paramMap.put("name", zipFileName);
+                paramMap.put("type", type);
+                paramMap.put("variables", variables);
+
+                final Project project = this.projectManager.getProject(projectName);
+
+                if (this.lockdownUploadProjects && !UserUtils
+                        .hasPermissionforAction(this.userManager, user, Type.UPLOADPROJECTS)) {
+                    final String message =
+                            "Project uploading is locked out. Only admin users and users with special permissions can upload projects. "
+                                    + "User " + user.getUserId() + " doesn't have permission to upload project.";
+                    logger.info(message);
+                    registerError(ret, message, resp, 403);
+                } else if (projectName == null || projectName.isEmpty()) {
+                    registerError(ret, "No project name found.", resp, 400);
+                } else if (project == null) {
+                    registerError(ret, "Copy from project Failed. Project '" + projectName
+                            + "' doesn't exist.", resp, 400);
+                } else if (!hasPermission(project, user, Type.WRITE)) {
+                    registerError(ret, "Installation Failed. User '" + user.getUserId()
+                            + "' does not have write access.", resp, 400);
+                } else {
+                    uploadFile(user, inputStream, paramMap);
+                }
             }
         }
         if (ret.containsKey("error")) {
@@ -263,6 +286,9 @@ public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
             final String action = (String) params.get("action");
             if (action.equals("upload")) {
                 handleUpload(req, resp, params, session);
+            }
+            if (action.equals("copyfrom")) {
+                handleCopyProjectWrapper(req, resp, params, session);
             }
         }
     }

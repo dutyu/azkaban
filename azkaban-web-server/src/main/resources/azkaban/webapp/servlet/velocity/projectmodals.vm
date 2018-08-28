@@ -101,45 +101,65 @@
 <div class="modal" id="copy-project-modal">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title">复制已存在的项目</h4>
-            </div>
-            <div class="modal-body">
-                <div class="panel panel-default" id="project-variables-copy-dev">
-                    <div class="panel-heading">
-                        替换变量
-                    </div>
+            <form id="copy-form" enctype="multipart/form-data" method="post">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">复制已存在的项目</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="panel panel-default" id="project-variables-copy-dev">
+                        <div class="panel-heading">
+                            替换变量
+                        </div>
                     <textarea rows="10" style="width:100%;resize:none;" name="vairables-content"
                               id="project-variables-copy" placeholder=""></textarea>
-                </div>
-                <div class="panel panel-default" id="project-tabs">
-                    <div class="panel-heading">
-                        项目列表
                     </div>
-                    <table class="table table-striped" id="projectTable">
-                        <thead>
-                        <tr>
-                            <th>项目名</th>
-                            <th>创建用户</th>
-                            <th>创建时间</th>
-                            <th>选中</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
+                    <div class="panel panel-default" id="zip-upload-dev-copy">
+                        <fieldset class="form-horizontal">
+                            <input type="file" class="form-control" id="file2" name="file">
+                        </fieldset>
+                        #if ($validatorFixPrompt.booleanValue())
+                            <label for="fix" class="col-sm-3 control-label">
+                                $validatorFixLabel.toString()
+                                <a href=$validatorFixLink.toString()target="_blank">
+                                    <span class="ui-icon ui-icon-info" style="display:inline-block;"></span>
+                                </a>
+                            </label>
+                            <div class="checkbox">
+                            ## Add a hidden input so that when user uncheck the checkbox, "fix" field will
+                            ## still have value set to "off". This enables us to distinguish whether the
+                            ## user uncheck the checkbox or we turn off the fix prompt UI.
+                                <input type="hidden" name="fix" value="off">
+                                <input type="checkbox" id="fix" name="fix" value="on" checked="checked">
+                            </div>
+                        #end
+                    </div>
+                    <div class="panel panel-default" id="project-tabs">
+                        <div class="panel-heading">
+                            项目列表
+                        </div>
+                        <table class="table table-striped" id="projectTable">
+                            <thead>
+                            <tr>
+                                <th>项目名</th>
+                                <th>创建用户</th>
+                                <th>创建时间</th>
+                                <th>选中</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <form id="copy-form">
+                <div class="modal-footer">
                     <input type="hidden" name="project" value="$project.name">
                     <input type="hidden" name="copyfrom" value="">
-                    <input type="hidden" name="doaction" value="copyfrom">
+                    <input type="hidden" name="action" value="copyfrom">
                     <input type="hidden" name="variables" value="" id="upload-project-variables-copy">
                     <button type="button" class="btn btn-info" id="copy-project-btn">复制</button>
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
     </div>
 </div>
