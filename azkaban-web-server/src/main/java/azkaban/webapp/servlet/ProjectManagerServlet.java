@@ -1982,6 +1982,14 @@ public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
                         logger.info("find dir:" + file.getAbsolutePath());
                         traverseAndReplaceVars(new File(file.getAbsolutePath()), kvList);
                     } else {
+                        String absPath = file.getAbsolutePath();
+                        if (absPath.contains(".") &&
+                                Utils.getVarFilterTypes().contains(
+                                        absPath.substring(absPath.lastIndexOf("."), absPath.length())
+                                                .substring(1))) {
+                            logger.info("skip file:" + absPath);
+                            continue;
+                        }
                         logger.info("start to replace file:" + file.getAbsolutePath());
                         BufferedReader bufIn = null;
                         BufferedWriter out = null;

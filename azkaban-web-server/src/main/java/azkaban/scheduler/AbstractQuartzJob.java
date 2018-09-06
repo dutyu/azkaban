@@ -16,9 +16,10 @@
 
 package azkaban.scheduler;
 
-import java.io.Serializable;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
+
+import java.io.Serializable;
 
 public abstract class AbstractQuartzJob implements Job {
 

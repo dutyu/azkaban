@@ -110,6 +110,10 @@ public class Utils {
         return false;
     }
 
+    public static List<String> getVarFilterTypes() {
+        return Arrays.asList(System.getProperty("java.var.filter.filetypes").split(","));
+    }
+
     public static String getVarStr() {
         return System.getProperty("java.str.varstr");
     }

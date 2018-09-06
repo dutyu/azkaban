@@ -6,6 +6,10 @@ azkaban_dir=$(dirname $0)/../..
 # Change if necessary
 conf=$azkaban_dir/conf
 
+if [[ -z "$varfilters" ]]; then
+varfilters="jar"
+fi
+
 if [[ -z "$varstr" ]]; then
 varstr="#"
 fi
@@ -62,7 +66,7 @@ else
   echo "Exit with error: $conf/log4j.properties file doesn't exist."
   exit 1;
 fi
-AZKABAN_OPTS="$AZKABAN_OPTS -server -Dcom.sun.management.jmxremote -Djava.str.varstr=$varstr -Djava.io.tmpdir=$tmpdir -Djava.io.zipdir=$zipdir -Dexecutorport=$executorport -Dserverpath=$serverpath"
+AZKABAN_OPTS="$AZKABAN_OPTS -server -Dcom.sun.management.jmxremote -Djava.var.filter.filetypes=$varfilters -Djava.str.varstr=$varstr -Djava.io.tmpdir=$tmpdir -Djava.io.zipdir=$zipdir -Dexecutorport=$executorport -Dserverpath=$serverpath"
 
 java $AZKABAN_OPTS $JAVA_LIB_PATH -cp $CLASSPATH azkaban.webapp.AzkabanWebServer -conf $conf $@ &
 
