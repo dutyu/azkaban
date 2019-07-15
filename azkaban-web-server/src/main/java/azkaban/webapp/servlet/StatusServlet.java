@@ -17,44 +17,41 @@
 
 package azkaban.webapp.servlet;
 
-import static azkaban.webapp.servlet.AbstractAzkabanServlet.JSON_MIME_TYPE;
-
 import azkaban.webapp.StatusService;
-import com.google.gson.GsonBuilder;
-import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.IOException;
+
+import static azkaban.webapp.servlet.AbstractAzkabanServlet.JSON_MIME_TYPE;
 
 public class StatusServlet extends HttpServlet {
 
-  private static final Logger log = LoggerFactory.getLogger(StatusServlet.class);
+    private static final Logger log = LoggerFactory.getLogger(StatusServlet.class);
 
-  private final StatusService statusService;
+    private final StatusService statusService;
 
-  public StatusServlet(final StatusService statusService) {
-    this.statusService = statusService;
-  }
-
-  @Override
-  protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
-      throws ServletException, IOException {
-    try {
-      resp.setContentType(JSON_MIME_TYPE);
-      resp.getOutputStream()
-          .println(new GsonBuilder()
-              .setPrettyPrinting()
-              .create()
-              .toJson(this.statusService.getStatus()));
-      resp.setStatus(HttpServletResponse.SC_OK);
-    } catch (final Exception e) {
-      log.error("Error!! while reporting status: ", e);
-      resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
-    } finally {
-      resp.getOutputStream().close();
+    public StatusServlet(final StatusService statusService) {
+        this.statusService = statusService;
     }
-  }
+
+    @Override
+    protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
+            throws ServletException, IOException {
+        try {
+            resp.setContentType(JSON_MIME_TYPE);
+            resp.getOutputStream()
+                    .println("OK\n");
+            resp.setStatus(HttpServletResponse.SC_OK);
+        } catch (final Exception e) {
+            log.error("Error!! while reporting status: ", e);
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+        } finally {
+            resp.getOutputStream().close();
+        }
+    }
 }
